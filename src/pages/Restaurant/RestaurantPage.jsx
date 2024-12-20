@@ -15,6 +15,7 @@ function RestaurantPage() {
   const [restaurants, setRestaurants] = useState(mockRestaurants);
   const [sortedRestaurants, setSortedRestaurants] = useState([]);
   const [userLocation, setUserLocation] = useState(null);
+  const [address, setAddress] = useState("");
   const [mapCenter, setMapCenter] = useState([42.3382, -71.0877]);
 
   // Fetch user location
@@ -24,6 +25,7 @@ function RestaurantPage() {
         const location = await getUserLocation();
         setUserLocation(location);
         setMapCenter([location.lat, location.lng]);
+        fetchAddress(location.lat, location.lng);
       } catch (error) {
         console.error("Error retrieving user location:", error);
       }
@@ -31,6 +33,29 @@ function RestaurantPage() {
 
     fetchUserLocation();
   }, []);
+
+  // Convert coordinates to address using Nominatim API
+  const fetchAddress = async (lat, lng) => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
+      );
+      const data = await response.json();
+      if (data && data.display_name) {
+        // Split the address and join only the first four parts
+        const trimmedAddress = data.display_name
+          .split(",")
+          .slice(0, 4)
+          .join(",");
+        setAddress(trimmedAddress);
+      } else {
+        setAddress("Address not found");
+      }
+    } catch (error) {
+      console.error("Error fetching address:", error);
+      setAddress("Error retrieving address");
+    }
+  };
 
   // Sort and filter restaurants
   useEffect(() => {
@@ -77,10 +102,7 @@ function RestaurantPage() {
   const handleCloseModal = () => setSelectedRestaurant(null);
 
   return (
-    <div
-      className="flex flex-col items-center px-4 sm:px-6 md:px-10 py-6"
-      style={{ backgroundColor: "#f1efef" }}
-    >
+    <div className="flex flex-col items-center px-4 sm:px-6 md:px-10 py-6 bg-[#f1efef]">
       <h1 className="text-4xl font-bold mb-6 text-[#00426c]">Restaurants</h1>
 
       {/* Display User Location */}
@@ -100,8 +122,12 @@ function RestaurantPage() {
             <p>
               Your Location:{" "}
               <span className="font-semibold">
-                Lat: {userLocation.lat.toFixed(2)}, Lng:{" "}
-                {userLocation.lng.toFixed(2)}
+                {/* Display only lat and lng -> Lat: {userLocation.lat.toFixed(2)}, Lng:{" "} {userLocation.lng.toFixed(2)} */}
+
+                {address ||
+                  `Lat: ${userLocation.lat.toFixed(
+                    2
+                  )}, Lng: ${userLocation.lng.toFixed(2)}`}
               </span>
             </p>
           </>
