@@ -111,12 +111,13 @@ function RestaurantPage() {
           <>
             <button
               onClick={() => setMapCenter([userLocation.lat, userLocation.lng])}
-              className="mr-4 p-2 bg-white rounded-full shadow-md hover:bg-gray-200 transition-all"
+              className="mr-4 bg-white rounded-full shadow-md hover:bg-gray-200 flex items-center justify-center 
+                         transition-all w-10 h-10 aspect-square active:translate-y-0.5 active:shadow-inner"
               title="Center to My Location"
             >
               <FontAwesomeIcon
                 icon={faLocationArrow}
-                className="text-blue-500 w-6 h-6"
+                className="text-[#39b2ff] w-6 h-6"
               />
             </button>
             <p>
