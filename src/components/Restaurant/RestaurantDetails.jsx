@@ -1,8 +1,29 @@
-import React from "react";
+import { useState } from "react";
 
 function RestaurantDetails({ restaurant, onSeeOnMap }) {
+  const [enlargedImage, setEnlargedImage] = useState(null);
+
+  const closeImage = () => {
+    setEnlargedImage(null);
+  };
+
   return (
     <div className="p-6 rounded-lg bg-white max-w-3xl mx-auto">
+      {/* Enlarged Image Modal */}
+      {enlargedImage && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
+          onClick={closeImage} // Close the modal when clicking the background
+        >
+          <img
+            src={enlargedImage}
+            alt="Enlarged"
+            className="max-w-[90%] max-h-[90%] rounded-lg shadow-lg"
+            onClick={(e) => e.stopPropagation()} // Prevent modal closure when clicking the image
+          />
+        </div>
+      )}
+
       {/* Restaurant Header */}
       <div className="flex flex-col items-center mb-6">
         <h2 className="text-3xl font-extrabold text-gray-800 mb-2">
@@ -25,8 +46,9 @@ function RestaurantDetails({ restaurant, onSeeOnMap }) {
               key={index}
               src={image}
               alt={`${restaurant.name} - ${index + 1}`}
-              className="rounded-lg shadow-sm object-cover"
+              className="rounded-lg shadow-sm object-cover cursor-pointer transition-transform transform hover:scale-105"
               style={{ height: "150px", width: "200px" }}
+              onClick={() => setEnlargedImage(image)}
             />
           </div>
         ))}
@@ -36,8 +58,9 @@ function RestaurantDetails({ restaurant, onSeeOnMap }) {
             <img
               src={restaurant.images[2]}
               alt={`${restaurant.name} - 3`}
-              className="rounded-lg shadow-sm object-cover hidden sm:block"
+              className="rounded-lg shadow-sm object-cover cursor-pointer transition-transform transform hover:scale-105"
               style={{ height: "150px", width: "200px" }}
+              onClick={() => setEnlargedImage(restaurant.images[2])}
             />
           </div>
         )}
