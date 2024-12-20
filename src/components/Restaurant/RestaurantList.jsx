@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -18,14 +18,13 @@ const customIcon = new L.Icon({
   iconAnchor: [12, 41],
 });
 
-// Utility to dynamically adjust map center using flyTo
-function FlyToCenter({ center }) {
+function FlyTo({ flyToCoords }) {
   const map = useMap();
   useEffect(() => {
-    if (center) {
-      map.flyTo(center, 16, { duration: 1.2 }); // Smooth animation
+    if (flyToCoords?.center) {
+      map.flyTo(flyToCoords.center, flyToCoords.zoom, { duration: 1.2 });
     }
-  }, [center, map]);
+  }, [flyToCoords, map]);
 
   return null;
 }
@@ -34,21 +33,29 @@ function RestaurantList({
   restaurants,
   onRestaurantClick,
   userLocation,
-  mapCenter,
-  setMapCenter,
+  flyToCoords,
+  selectedPopup,
 }) {
+  const popupRefs = useRef({});
+
+  useEffect(() => {
+    if (selectedPopup && popupRefs.current[selectedPopup.id]) {
+      popupRefs.current[selectedPopup.id].openPopup();
+    }
+  }, [selectedPopup]);
+
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6">
       {/* Map Section */}
       <div className="w-full h-96 mb-6">
         <MapContainer
-          center={mapCenter}
+          center={flyToCoords?.center || [42.3382, -71.0877]}
           zoom={16}
           className="map-container w-full h-full rounded-lg shadow-lg"
           scrollWheelZoom={true}
         >
           {/* Adjust Center Dynamically */}
-          <FlyToCenter center={mapCenter} />
+          <FlyTo flyToCoords={flyToCoords} />
 
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -68,7 +75,7 @@ function RestaurantList({
               {/* Circle Around User Location */}
               <Circle
                 center={[userLocation.lat, userLocation.lng]}
-                radius={userLocation.accuracy || 100} // Accuracy radius or default
+                radius={userLocation.accuracy || 100}
                 color="#ff4439"
                 fillColor="#ffa49f"
                 fillOpacity={0.2}
@@ -83,12 +90,20 @@ function RestaurantList({
               position={[restaurant.location.lat, restaurant.location.lng]}
               icon={customIcon}
               eventHandlers={{
-                click: () =>
-                  setMapCenter([
-                    restaurant.location.lat,
-                    restaurant.location.lng,
-                  ]),
+                click: (e) => {
+                  const map = e.target._map;
+                  const { lat, lng } = restaurant.location;
+
+                  // Center the map on the restaurant
+                  map.flyTo([lat, lng], 18, { duration: 1.2 });
+
+                  // Open the popup after the map centers
+                  setTimeout(() => {
+                    e.target.openPopup();
+                  }, 200);
+                },
               }}
+              ref={(ref) => (popupRefs.current[restaurant.id] = ref)}
             >
               <Popup>
                 <div className="text-center">

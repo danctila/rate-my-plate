@@ -1,6 +1,6 @@
 import React from "react";
 
-function RestaurantDetails({ restaurant }) {
+function RestaurantDetails({ restaurant, onSeeOnMap }) {
   return (
     <div className="p-6 rounded-lg bg-white max-w-3xl mx-auto">
       {/* Restaurant Header */}
@@ -20,10 +20,7 @@ function RestaurantDetails({ restaurant }) {
         }`}
       >
         {restaurant.images?.slice(0, 2).map((image, index) => (
-          <div
-            key={index}
-            className="flex justify-center items-center" // Ensures centering
-          >
+          <div key={index} className="flex justify-center items-center">
             <img
               key={index}
               src={image}
@@ -81,8 +78,8 @@ function RestaurantDetails({ restaurant }) {
         </ul>
       </div>
 
-      {/* Google Maps Link */}
-      <div className="text-center">
+      {/* Google Maps and See on Map Buttons */}
+      <div className="flex justify-center gap-4">
         <a
           href={restaurant.googleMapsLink}
           target="_blank"
@@ -91,6 +88,12 @@ function RestaurantDetails({ restaurant }) {
         >
           View on Google Maps
         </a>
+        <button
+          onClick={() => onSeeOnMap(restaurant)}
+          className="inline-block px-6 py-3 bg-green-500 text-white font-semibold rounded-lg shadow-md hover:bg-green-600 transition"
+        >
+          See on Map
+        </button>
       </div>
     </div>
   );

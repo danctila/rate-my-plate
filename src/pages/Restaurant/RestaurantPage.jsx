@@ -12,11 +12,12 @@ function RestaurantPage() {
   const [studentDiscountSelected, setStudentDiscountSelected] = useState(false);
   const [sortByNearest, setSortByNearest] = useState(false);
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
+  const [popupRestaurant, setPopupRestaurant] = useState(null);
   const [restaurants, setRestaurants] = useState(mockRestaurants);
   const [sortedRestaurants, setSortedRestaurants] = useState([]);
   const [userLocation, setUserLocation] = useState(null);
-  const [address, setAddress] = useState("");
-  const [mapCenter, setMapCenter] = useState([42.3382, -71.0877]);
+  const [userAddress, setUserAddress] = useState("");
+  const [flyToCoords, setFlyToCoords] = useState({ center: null, zoom: 16 });
 
   // Fetch user location
   useEffect(() => {
@@ -24,8 +25,7 @@ function RestaurantPage() {
       try {
         const location = await getUserLocation();
         setUserLocation(location);
-        setMapCenter([location.lat, location.lng]);
-        fetchAddress(location.lat, location.lng);
+        fetchUserAddress(location.lat, location.lng);
       } catch (error) {
         console.error("Error retrieving user location:", error);
       }
@@ -34,27 +34,46 @@ function RestaurantPage() {
     fetchUserLocation();
   }, []);
 
-  // Convert coordinates to address using Nominatim API
-  const fetchAddress = async (lat, lng) => {
+  // Fetch user address from lat, lng
+  const fetchUserAddress = async (lat, lng) => {
     try {
       const response = await fetch(
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
       );
       const data = await response.json();
       if (data && data.display_name) {
-        // Split the address and join only the first four parts
         const trimmedAddress = data.display_name
           .split(",")
           .slice(0, 4)
           .join(",");
-        setAddress(trimmedAddress);
+        setUserAddress(trimmedAddress);
       } else {
-        setAddress("Address not found");
+        setUserAddress("Address not found");
       }
     } catch (error) {
       console.error("Error fetching address:", error);
-      setAddress("Error retrieving address");
+      setUserAddress("Error retrieving address");
     }
+  };
+
+  // Fly to restaurant location on map
+  const handleFlyToRestaurant = (restaurant) => {
+    setSelectedRestaurant(restaurant);
+    setPopupRestaurant(restaurant);
+
+    setFlyToCoords({
+      center: [restaurant.location.lat, restaurant.location.lng],
+      zoom: 18,
+    });
+
+    const mapSection = document.querySelector(".map-container");
+    if (mapSection) {
+      mapSection.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    setTimeout(() => {
+      setSelectedRestaurant(null);
+    }, 0);
   };
 
   // Sort and filter restaurants
@@ -92,15 +111,6 @@ function RestaurantPage() {
     restaurants,
   ]);
 
-  const toggleHuskyDollars = () => setHuskyDollarsSelected((prev) => !prev);
-  const toggleStudentDiscount = () =>
-    setStudentDiscountSelected((prev) => !prev);
-  const toggleSortByNearest = () => setSortByNearest((prev) => !prev);
-
-  const handleRestaurantClick = (restaurant) =>
-    setSelectedRestaurant(restaurant);
-  const handleCloseModal = () => setSelectedRestaurant(null);
-
   return (
     <div className="flex flex-col items-center px-4 sm:px-6 md:px-10 py-6 bg-[#f1efef]">
       <h1 className="text-4xl font-bold mb-6 text-[#00426c]">Restaurants</h1>
@@ -110,7 +120,12 @@ function RestaurantPage() {
         {userLocation ? (
           <>
             <button
-              onClick={() => setMapCenter([userLocation.lat, userLocation.lng])}
+              onClick={() =>
+                setFlyToCoords({
+                  center: [userLocation.lat, userLocation.lng],
+                  zoom: 16,
+                })
+              }
               className="mr-4 bg-white rounded-full shadow-md hover:bg-gray-200 flex items-center justify-center 
                          transition-all w-10 h-10 aspect-square active:translate-y-0.5 active:shadow-inner"
               title="Center to My Location"
@@ -125,7 +140,7 @@ function RestaurantPage() {
               <span className="font-semibold">
                 {/* Display only lat and lng -> Lat: {userLocation.lat.toFixed(2)}, Lng:{" "} {userLocation.lng.toFixed(2)} */}
 
-                {address ||
+                {userAddress ||
                   `Lat: ${userLocation.lat.toFixed(
                     2
                   )}, Lng: ${userLocation.lng.toFixed(2)}`}
@@ -140,7 +155,7 @@ function RestaurantPage() {
       {/* Filter Buttons */}
       <div className="flex space-x-4 mb-6">
         <button
-          onClick={toggleHuskyDollars}
+          onClick={() => setHuskyDollarsSelected((prev) => !prev)}
           className={`px-4 py-2 border rounded transition duration-200 ${
             huskyDollarsSelected
               ? "bg-[#39b2ff] text-white border-[#00426c]"
@@ -150,7 +165,7 @@ function RestaurantPage() {
           Dining Dollars
         </button>
         <button
-          onClick={toggleStudentDiscount}
+          onClick={() => setStudentDiscountSelected((prev) => !prev)}
           className={`px-4 py-2 border rounded transition duration-200 ${
             studentDiscountSelected
               ? "bg-[#39b2ff] text-white border-[#00426c]"
@@ -160,7 +175,7 @@ function RestaurantPage() {
           Student Discount
         </button>
         <button
-          onClick={toggleSortByNearest}
+          onClick={() => setSortByNearest((prev) => !prev)}
           className={`px-4 py-2 border rounded transition duration-200 ${
             sortByNearest
               ? "bg-[#39b2ff] text-white border-[#00426c]"
@@ -174,17 +189,18 @@ function RestaurantPage() {
       {/* Render RestaurantList */}
       <RestaurantList
         restaurants={sortedRestaurants}
-        onRestaurantClick={handleRestaurantClick}
+        onRestaurantClick={(restaurant) => setSelectedRestaurant(restaurant)}
         userLocation={userLocation}
-        mapCenter={mapCenter}
-        setMapCenter={setMapCenter}
+        flyToCoords={flyToCoords}
+        selectedPopup={popupRestaurant}
       />
 
       {/* Restaurant Modal */}
       {selectedRestaurant && (
         <RestaurantModal
           restaurant={selectedRestaurant}
-          onClose={handleCloseModal}
+          onClose={() => setSelectedRestaurant(null)}
+          onSeeOnMap={handleFlyToRestaurant}
         />
       )}
     </div>

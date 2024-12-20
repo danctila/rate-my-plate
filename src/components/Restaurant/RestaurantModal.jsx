@@ -2,7 +2,7 @@ import { React, useState, useEffect } from "react";
 import RestaurantChat from "./RestaurantChat";
 import RestaurantDetails from "./RestaurantDetails";
 
-function RestaurantModal({ restaurant, onClose }) {
+function RestaurantModal({ restaurant, onClose, onSeeOnMap }) {
   const [isVisible, setIsVisible] = useState(false);
 
   const handleOverlayClick = (e) => {
@@ -11,18 +11,18 @@ function RestaurantModal({ restaurant, onClose }) {
     }
   };
 
-  // Handles the "out" animation and calls onClose after the animation
+  // Out animation and close modal
   const triggerClose = () => {
-    setIsVisible(false); // Trigger closing animation
+    setIsVisible(false);
     setTimeout(() => {
-      onClose(); // Wait for animation to finish before calling onClose
-    }, 500); // Match this duration to the animation duration (500ms)
+      onClose();
+    }, 500);
   };
 
-  // Animation and scroll-locking effect
+  // In animation and scroll-locking effect
   useEffect(() => {
     const timeout = setTimeout(() => {
-      setIsVisible(true); // Trigger animation after a slight delay
+      setIsVisible(true);
     }, 0);
 
     const originalOverflow = document.body.style.overflow;
@@ -72,7 +72,10 @@ function RestaurantModal({ restaurant, onClose }) {
         </button>
 
         {/* Restaurant Details */}
-        <RestaurantDetails restaurant={restaurant} />
+        <RestaurantDetails
+          restaurant={restaurant}
+          onSeeOnMap={() => onSeeOnMap(restaurant)}
+        />
 
         <hr className="border-gray-300 my-6" />
 
